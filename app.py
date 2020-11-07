@@ -211,9 +211,29 @@ def stop_following(follow_id):
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
+    
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
 
-    form = UserEditForm()
-    return render_template('users/edit.html', form=form)
+    user = g.user
+    form = UserEditForm(obj=user)
+
+    if form.validate_on_submit():
+        if User.authenticate(user.username, form.password.data):
+            user.username = form.username.data
+            user.email = form.email.data
+            user.image_url = form.image_url.data or user.image_url or "/static/images/default-pic.png"
+            user.header_image_url = form.header_image_url.data or user.header_image_url or "/static/images/warbler-hero.jpg"
+            user.bio = form.bio.data
+            user.location = form.location.data or user.location
+
+            db.session.commit()
+            return redirect(f"/users/{user.id}")
+
+        flash("Wrong password, please try again.", 'danger')
+
+    return render_template('users/edit.html', form=form, user_id=user.id)
 
 
 @app.route('/users/delete', methods=["POST"])
@@ -294,11 +314,16 @@ def homepage():
     """
 
     if g.user:
+        user = g.user
+        following = [u.id for u in user.following] + [user.id]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        
 
         return render_template('home.html', messages=messages)
 
