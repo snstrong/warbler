@@ -277,6 +277,15 @@ def messages_add():
 
     return render_template('messages/new.html', form=form)
 
+    @app.route('/users/add_like/<int:msg_id>', methods=['POST'])
+    def add_like(msg_id):
+        # TODO:
+        # check if user is authorized
+        # check if user is trying to like their own message
+        # update database
+        # update icon on home page (this might already be happening based on the html, but can make it a star instead as specified in directions)
+        return redirect('/')
+
 
 @app.route('/messages/<int:message_id>', methods=["GET"])
 def messages_show(message_id):
@@ -324,7 +333,6 @@ def homepage():
                     .limit(100)
                     .all())
         
-
         return render_template('home.html', messages=messages)
 
     else:
