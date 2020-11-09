@@ -31,7 +31,8 @@
           </li>
           <li class="stat">
             <p class="small">Likes</p>
-            <h4>TBD</h4>
+            <!-- TODO: Add count of liked messages -->
+            <h4><a href='/users/likes'>{{ user.likes | length }}</a></h4>
           </li>
           <div class="ml-auto">
             {% if g.user.id == user.id %}

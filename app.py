@@ -212,6 +212,9 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
     
+    # TODO: update for likes
+    # Show liked warbles
+    # Link to liked warbles
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -234,6 +237,17 @@ def profile():
         flash("Wrong password, please try again.", 'danger')
 
     return render_template('users/edit.html', form=form, user_id=user.id)
+
+@app.route('/users/likes')
+def show_liked_messages():
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    user = g.user
+    likes = [msg.id for msg in user.likes]
+    messages = [Message.query.get_or_404(i) for i in likes]
+    
+    return render_template('/users/likes.html', user=user, user_id=user.id, messages=messages)
 
 
 @app.route('/users/delete', methods=["POST"])
@@ -295,6 +309,8 @@ def add_like(msg_id):
     new_like = Likes(user_id=g.user.id, message_id=msg_id)
     db.session.add(new_like)
     db.session.commit()
+
+    # TODO: Add "unliking" - check if in likes then add/delete accordingly
     
     return redirect('/')
 
