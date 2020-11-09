@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Follows, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -277,14 +277,26 @@ def messages_add():
 
     return render_template('messages/new.html', form=form)
 
-    @app.route('/users/add_like/<int:msg_id>', methods=['POST'])
-    def add_like(msg_id):
-        # TODO:
-        # check if user is authorized
-        # check if user is trying to like their own message
-        # update database
-        # update icon on home page (this might already be happening based on the html, but can make it a star instead as specified in directions)
-        return redirect('/')
+@app.route('/users/add_like/<int:msg_id>', methods=['POST'])
+def add_like(msg_id):
+    
+    # check if user is authorized
+    if not g.user:
+        flash("Please log in to like warbles!", "danger")
+        return redirect("/")
+
+    # check if user is trying to like their own message
+    msg = Message.query.get_or_404(msg_id)
+    if g.user.id == msg.user_id:
+        flash("Sorry, you can't 'like' your own warble!", "warning")
+        return redirect("/")
+    
+    # create new Likes object & update database
+    new_like = Likes(user_id=g.user.id, message_id=msg_id)
+    db.session.add(new_like)
+    db.session.commit()
+    
+    return redirect('/')
 
 
 @app.route('/messages/<int:message_id>', methods=["GET"])
@@ -332,8 +344,9 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        likes = [msg.id for msg in user.likes]
         
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, user=user, likes=likes)
 
     else:
         return render_template('home-anon.html')
