@@ -293,10 +293,11 @@ def messages_add():
 
 @app.route('/users/add_like/<int:msg_id>', methods=['POST'])
 def add_like(msg_id):
+    """Adds like or unlikes a message."""
     
     # check if user is authorized
     if not g.user:
-        flash("Please log in to like warbles!", "danger")
+        flash("You must be logged in to do that!", "danger")
         return redirect("/")
 
     # check if user is trying to like their own message
@@ -305,12 +306,16 @@ def add_like(msg_id):
         flash("Sorry, you can't 'like' your own warble!", "warning")
         return redirect("/")
     
-    # create new Likes object & update database
-    new_like = Likes(user_id=g.user.id, message_id=msg_id)
-    db.session.add(new_like)
-    db.session.commit()
-
-    # TODO: Add "unliking" - check if in likes then add/delete accordingly
+    if msg in g.user.likes:
+        # check whether message was previously liked and if so remove from likes table in database
+        liked = Likes.query.filter((Likes.message_id==msg.id) & (Likes.user_id==g.user.id))
+        db.session.delete(liked[0])
+        db.session.commit()
+    else:
+        # create new Likes object & update database
+        new_like = Likes(user_id=g.user.id, message_id=msg_id)
+        db.session.add(new_like)
+        db.session.commit()
     
     return redirect('/')
 
