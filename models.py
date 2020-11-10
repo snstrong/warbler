@@ -17,13 +17,13 @@ class Follows(db.Model):
     user_being_followed_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
-        primary_key=True,
+        primary_key=True
     )
 
     user_following_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id', ondelete="cascade"),
-        primary_key=True,
+        primary_key=True
     )
 
 
@@ -56,24 +56,24 @@ class User(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
+        primary_key=True
     )
 
     email = db.Column(
         db.Text,
         nullable=False,
-        unique=True,
+        unique=True
     )
 
     username = db.Column(
         db.Text,
         nullable=False,
-        unique=True,
+        unique=True
     )
 
     image_url = db.Column(
         db.Text,
-        default="/static/images/default-pic.png",
+        default="/static/images/default-pic.png"
     )
 
     header_image_url = db.Column(
@@ -82,16 +82,16 @@ class User(db.Model):
     )
 
     bio = db.Column(
-        db.Text,
+        db.Text
     )
 
     location = db.Column(
-        db.Text,
+        db.Text
     )
 
     password = db.Column(
         db.Text,
-        nullable=False,
+        nullable=False
     )
 
     messages = db.relationship('Message')
