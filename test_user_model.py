@@ -9,6 +9,8 @@ import os
 from unittest import TestCase
 
 from models import db, bcrypt, User, Message, Follows
+from psycopg2.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -84,6 +86,49 @@ class UserModelTestCase(TestCase):
         self.assertEqual(u.image_url, "/static/images/default-pic.png")
         self.assertNotEqual(u.password, "HASHED_PASSWORD")
 
+        # check to make sure uniquness violation causes failed signup
+        # 
+        u2 = User.signup(
+            email="test@test.com",
+            username="testuser2",
+            password="THIS_IS_PASSWORD",
+            image_url=None
+        )
+        self.assertRaises(IntegrityError, db.session.commit)
+        
+        db.session.rollback()
+        
+        u3 = User.signup(
+            email="testing_testing@test.com",
+            username="testuser",
+            password="MORE_PASSWORD_YES",
+            image_url=None
+        )
+        self.assertRaises(IntegrityError, db.session.commit)
+
+        db.session.rollback()
+
+        # Check to makes sure nullable violation causes failed signup
+        # 
+        u4 = User.signup(
+            email=None,
+            username="testytester",
+            password="ANOTHER_PASSWORD",
+            image_url=None
+        )
+        self.assertRaises(IntegrityError, db.session.commit)
+
+        db.session.rollback()
+
+        u5 = User.signup(
+            email="some_email@test.com",
+            username=None,
+            password="YET_ANOTHER",
+            image_url=None
+        )
+        self.assertRaises(IntegrityError, db.session.commit)
+
+
     def test_authenticate(self):
         """Tests authentication"""
         u = User.signup(
@@ -100,6 +145,11 @@ class UserModelTestCase(TestCase):
         authenticated2 = User.authenticate(username="testuser", password="HASHED_PASSWORD")
         self.assertNotEqual(authenticated2.password, "HASHED_PASSWORD")
         self.assertEqual(authenticated2.password, u.password)
+
+        authenticated3 = User.authenticate(username="testuser1", password="HASHED_PASSWORD")
+        self.assertEqual(authenticated3, False)
+
+
 
     
 
